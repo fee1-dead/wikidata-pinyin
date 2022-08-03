@@ -1,6 +1,7 @@
 use std::env;
 use std::error::Error;
 
+use actix_cors::Cors;
 use actix_web::web::{self, Json, Query};
 use actix_web::{get, App, HttpServer};
 use pinyin::ToPinyinMulti;
@@ -36,9 +37,16 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(8000);
-    HttpServer::new(|| App::new().service(api).default_service(web::to(default)))
-        .bind(("0.0.0.0", port))?
-        .run()
-        .await?;
+
+    HttpServer::new(|| {
+        let cors = Cors::permissive();
+        App::new()
+            .wrap(cors)
+            .service(api)
+            .default_service(web::to(default))
+    })
+    .bind(("0.0.0.0", port))?
+    .run()
+    .await?;
     Ok(())
 }
